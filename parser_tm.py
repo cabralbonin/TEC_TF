@@ -23,13 +23,13 @@ def sipser_to_standard(transitions):
     for transition in transitions:
         current_state, current_symbol, new_symbol, direction, new_state = transition.split()
         
-        states.add(current_state)
-        states.add(new_state)
-        
         if current_state == '0':
             current_state = initial_state
         if new_state == '0':
             new_state = initial_state
+            
+        states.add(current_state)
+        states.add(new_state)
         
         new_transitions.add(f'{current_state} {current_symbol} {new_symbol} {direction} {new_state}')
     
@@ -62,41 +62,22 @@ def standard_to_sipser(transitions):
     for transition in transitions:
         current_state, current_symbol, new_symbol, direction, new_state = transition.split()
         
-        states.add(current_state)
-        states.add(new_state)
-        symbols.add(current_symbol)
-        symbols.add(new_symbol)
-        
         if current_state == '0':
             current_state = initial_state
         if new_state == '0':
             new_state = initial_state
-        
-        # -------------------- Trata estado inicial ------------------- #
             
-        if current_state == initial_state and current_symbol == '_' and new_symbol == current_symbol and direction == 'r':
-            new_transitions.add(f'{initial_state} {current_symbol} {new_symbol} {direction} {new_state}')
-            new_transitions.add(f'{initial_state} # # {direction} {new_state}')
+        states.add(current_state)
+        states.add(new_state)
+        symbols.add(current_symbol)
+        symbols.add(new_symbol)
             
-        elif current_state == initial_state and current_symbol == '_' and new_symbol == current_symbol and direction == 'l':
-            new_transitions.add(f'{initial_state} {current_symbol} {new_symbol} {direction} {new_state}')
-            new_transitions.add(f'{initial_state} + + {direction} {new_state}')
-            
-        # -------------------- Trata outros estados ------------------- #
-            
-        elif current_symbol == '_' and new_symbol == current_symbol and direction == 'l':
-            # Checa se esta no final da fita e volta 
-            new_transitions.add(f'{current_state} {current_symbol} {new_symbol} {direction} {new_state}')
-            new_transitions.add(f'{current_state} + + {direction} {new_state}')
-            
-        elif current_symbol == '_' and new_symbol != current_symbol and direction == 'l':
+        if current_symbol == '_'  and direction == 'l':
             # Empurra simbolo de final de fita para direita e escreve um simbolo no lugar
             end_tape_state = 'end_tape_state_' + current_state
             new_transitions.add(f'{current_state} {current_symbol} {new_symbol} {direction} {new_state}')
             new_transitions.add(f'{current_state} + _ r {end_tape_state}')
             new_transitions.add(f'{end_tape_state} _ + l {current_state}')
-            
-        # ------------------------------------------------------------ #
             
         else:
             new_transitions.add(f'{current_state} {current_symbol} {new_symbol} {direction} {new_state}')
@@ -106,21 +87,20 @@ def standard_to_sipser(transitions):
         tudo para direita. Fazemos isso através de estados auxiliares que reescrevem o simbolo lido anteriormente.
     '''        
     for state in states:
-        if state != '0':
-            push_state = 'push_state' + state
-            new_transitions.add(f'{state} # # r {push_state}')
-            for from_symbol in symbols:
-                from_rewrite_state = 'rewrite_state' + state + '_' + from_symbol
-                new_transitions.add(f'{push_state} {from_symbol} _ r {from_rewrite_state}')
-                for to_symbol in symbols:
-                    to_rewrite_state = 'rewrite_state' + state + '_' + to_symbol
-                    end_tape_state = 'end_state_' + state + '_+'
-                    goto_begin_state = 'goto_begin_state_' + state
-                    new_transitions.add(f'{from_rewrite_state} {to_symbol} {from_symbol} r {to_rewrite_state}')
-                    new_transitions.add(f'{from_rewrite_state} + {from_symbol} r {end_tape_state}')
-                    new_transitions.add(f'{end_tape_state} _ + l {goto_begin_state}')
-                    new_transitions.add(f'{goto_begin_state} * * l {goto_begin_state}')
-                    new_transitions.add(f'{goto_begin_state} # # r {state}')
+        push_state = 'push_state' + state
+        new_transitions.add(f'{state} # # r {push_state}')
+        for from_symbol in symbols:
+            from_rewrite_state = 'rewrite_state' + state + '_' + from_symbol
+            new_transitions.add(f'{push_state} {from_symbol} _ r {from_rewrite_state}')
+            for to_symbol in symbols:
+                to_rewrite_state = 'rewrite_state' + state + '_' + to_symbol
+                end_tape_state = 'end_state_' + state + '_+'
+                goto_begin_state = 'goto_begin_state_' + state
+                new_transitions.add(f'{from_rewrite_state} {to_symbol} {from_symbol} r {to_rewrite_state}')
+                new_transitions.add(f'{from_rewrite_state} + {from_symbol} r {end_tape_state}')
+                new_transitions.add(f'{end_tape_state} _ + l {goto_begin_state}')
+                new_transitions.add(f'{goto_begin_state} * * l {goto_begin_state}')
+                new_transitions.add(f'{goto_begin_state} # # r {state}')
 
     return new_transitions
 
@@ -164,3 +144,4 @@ convert_tm('sameamount10.in')
 # convert_tm('palindrome.in')
 # convert_tm('prime.in')
 # convert_tm('binarytodecimal.in')
+# convert_tm('test.in')
